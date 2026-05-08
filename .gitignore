@@ -1,0 +1,12 @@
+.env
+venv/
+data/
+models/
+mlflow.db
+mlruns/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+Thumbs.db
+*.db

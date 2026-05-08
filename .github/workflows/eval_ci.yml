@@ -1,0 +1,44 @@
+name: DocuMind AI — Eval CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    name: RAG Evaluation Tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run eval test suite
+        env:
+          AZURE_OPENAI_KEY:             ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT:        ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_CHAT_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+          AZURE_OPENAI_EMBED_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_EMBED_DEPLOYMENT }}
+          PINECONE_API_KEY:             ${{ secrets.PINECONE_API_KEY }}
+          PINECONE_INDEX_NAME:          ${{ secrets.PINECONE_INDEX_NAME }}
+          COHERE_API_KEY:               ${{ secrets.COHERE_API_KEY }}
+        run: |
+          cd src
+          pytest test_rag_eval.py -v --tb=short
+
+      - name: Upload MLflow artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-runs
+          path: mlruns/
