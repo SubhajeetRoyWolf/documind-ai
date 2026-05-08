@@ -143,3 +143,14 @@ PINECONE_API_KEY=your_key
 PINECONE_INDEX_NAME=documind-index
 COHERE_API_KEY=your_key
 ```
+
+## 🧠 Key Concepts Demonstrated
+
+- **RAG** — Retrieval Augmented Generation pipeline
+- **Agent orchestration** — Multi-agent LangGraph system
+- **Vector search** — Pinecone ANN + Cohere reranking
+- **Hallucination detection** — Critic agent + RAGAS faithfulness
+- **LoRA fine-tuning** — PEFT parameter-efficient training
+- **MLflow** — Experiment tracking and model registry
+- **CI/CD** — Automated eval gating on every push
+
