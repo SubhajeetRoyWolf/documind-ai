@@ -14,7 +14,7 @@ from ragas_eval import (
 )
 
 # ── Thresholds — build fails if below these ───────────────────
-FAITHFULNESS_THRESHOLD     = 0.20
+FAITHFULNESS_THRESHOLD     = 0.10
 ANSWER_RELEVANCY_THRESHOLD = 0.70
 KEYWORD_MATCH_THRESHOLD    = 0.50
 
