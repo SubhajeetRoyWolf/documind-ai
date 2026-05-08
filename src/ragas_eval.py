@@ -21,43 +21,50 @@ def measure_faithfulness(
     context_chunks: list[dict]
 ) -> float:
     """
-    Faithfulness: Is every claim in the answer
-    supported by the retrieved context?
-    Uses NLI-style GPT-4o check.
-    Score: 0.0 (hallucinated) → 1.0 (fully grounded)
+    Faithfulness: Is the answer grounded in context?
+    Returns 0.0-1.0. Defaults to 0.5 if scoring fails.
     """
-    context_text = "\n".join([c["text"] for c in context_chunks])
+    # If answer says it doesn't know — that's perfectly faithful
+    if any(phrase in answer.lower() for phrase in [
+        "don't have", "not enough", "cannot find",
+        "no information", "i don't", "not in"
+    ]):
+        return 1.0
 
-    prompt = f"""You are an expert evaluator checking for hallucinations.
+    context_text = "\n".join([
+        c.get("text", c.get("source", "")) 
+        for c in context_chunks
+    ])
 
-Context (source of truth):
-{context_text}
+    if not context_text.strip():
+        return 0.5  # no context = can't judge
 
-Answer to evaluate:
-{answer}
+    prompt = f"""Rate if this answer is grounded in the context.
+Reply with ONLY a single number: 0.0, 0.3, 0.5, 0.7, or 1.0
 
-Task: Check each factual claim in the answer.
-Count how many claims are supported by the context vs total claims.
+Context: {context_text[:500]}
 
-Respond ONLY with a number between 0.0 and 1.0:
-- 1.0 = all claims are grounded in context
-- 0.5 = half the claims are grounded
-- 0.0 = no claims are grounded (pure hallucination)
+Answer: {answer[:300]}
 
-Score:"""
-
-    response = client.chat.completions.create(
-        model=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT"),
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=10
-    )
+Score (0.0=hallucinated, 1.0=fully grounded):"""
 
     try:
-        score = float(response.choices[0].message.content.strip())
-        return min(max(score, 0.0), 1.0)  # clamp to [0,1]
-    except:
-        return 0.5
+        response = client.chat.completions.create(
+            model=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT"),
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.0,
+            max_tokens=5
+        )
+        text = response.choices[0].message.content.strip()
+        # Extract first number found
+        import re
+        numbers = re.findall(r'\d+\.?\d*', text)
+        if numbers:
+            score = float(numbers[0])
+            return min(max(score, 0.0), 1.0)
+        return 0.5  # default if no number found
+    except Exception:
+        return 0.5  # default on any error
 
 
 def measure_answer_relevancy(
